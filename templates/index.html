@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forest Threat Detection System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .section {
+            border: 1px solid #ddd;
+            padding: 25px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .upload-area {
+            border: 2px dashed #7f8c8d;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+        .upload-area:hover {
+            border-color: #3498db;
+            background-color: #e8f4fc;
+        }
+        #preview {
+            max-width: 100%;
+            max-height: 400px;
+            display: none;
+            margin: 20px auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .detected {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        .not-detected {
+            background-color: #51cf66;
+            color: white;
+        }
+        .fire-detected {
+            background-color: #ff922b;
+            color: white;
+        }
+        .loading {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab-btn {
+            padding: 12px 24px;
+            cursor: pointer;
+            background-color: #f1f1f1;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            margin-right: 5px;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background-color: white;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .confidence-meter {
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .confidence-level {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        .info-text {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Forest Threat Detection System</h1>
+            <p>Analyze images for deforestation and wildfire risks</p>
+        </div>
+        
+        <div class="section">
+            <h2>Threat Detection Analysis</h2>
+            <p>Upload an image to analyze for deforestation and wildfire risks.</p>
+            
+            <div class="upload-area" id="upload-area">
+                <p><i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #7f8c8d;"></i></p>
+                <p>Drag & drop an image here or click to browse</p>
+                <input type="file" id="file-input" accept="image/*" style="display: none;">
+                <img id="preview" alt="Image preview">
+            </div>
+            
+            <button id="analyze-btn" disabled>Analyze Image for Threats</button>
+            <div class="loading" id="analysis-loading"></div>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="deforestation">Deforestation</button>
+                <button class="tab-btn" data-tab="wildfire">Wildfire</button>
+            </div>
+            
+            <div id="deforestation" class="tab-content active">
+                <h3>Deforestation Analysis</h3>
+                <div id="deforestation-result" class="result">
+                    No analysis performed yet
+                </div>
+                <div class="confidence-meter">
+                    <div id="deforestation-confidence" class="confidence-level" style="width: 0%; background-color: #ff6b6b;"></div>
+                </div>
+                <p class="info-text">Deforestation detection analyzes vegetation patterns to identify areas of forest loss.</p>
+            </div>
+            
+            <div id="wildfire" class="tab-content">
+                <h3>Wildfire Analysis</h3>
+                <div id="wildfire-result" class="result">
+                    No analysis performed yet
+                </div>
+                <div class="confidence-meter">
+                    <div id="wildfire-confidence" class="confidence-level" style="width: 0%; background-color: #ff922b;"></div>
+                </div>
+                <p class="info-text">Wildfire detection looks for thermal anomalies and smoke patterns indicating active fires.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons and content
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                btn.classList.add('active');
+                const tabId = btn.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Image Upload Section
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const preview = document.getElementById('preview');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const deforestationResult = document.getElementById('deforestation-result');
+        const wildfireResult = document.getElementById('wildfire-result');
+        const deforestationConfidence = document.getElementById('deforestation-confidence');
+        const wildfireConfidence = document.getElementById('wildfire-confidence');
+        const analysisLoading = document.getElementById('analysis-loading');
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file (JPEG, PNG)');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    analyzeBtn.disabled = false;
+                    
+                    // Reset previous results
+                    deforestationResult.textContent = 'No analysis performed yet';
+                    wildfireResult.textContent = 'No analysis performed yet';
+                    deforestationResult.className = 'result';
+                    wildfireResult.className = 'result';
+                    deforestationConfidence.style.width = '0%';
+                    wildfireConfidence.style.width = '0%';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Handle drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#3498db';
+            uploadArea.style.backgroundColor = '#e8f4fc';
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#7f8c8d';
+            uploadArea.style.backgroundColor = '#f8f9fa';
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#7f8c8d';
+            uploadArea.style.backgroundColor = '#f8f9fa';
+            
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                const event = new Event('change');
+                fileInput.dispatchEvent(event);
+            }
+        });
+        
+        // Handle analysis
+        analyzeBtn.addEventListener('click', () => {
+            const file = fileInput.files[0];
+            
+            if (!file) return;
+            
+            analyzeBtn.disabled = true;
+            analysisLoading.style.display = 'block';
+            
+            // Reset results
+            deforestationResult.textContent = 'Analyzing...';
+            wildfireResult.textContent = 'Analyzing...';
+            deforestationResult.className = 'result';
+            wildfireResult.className = 'result';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            // Analyze for both deforestation and wildfire
+            Promise.all([
+                fetch('/predict_deforestation', {
+                    method: 'POST',
+                    body: formData
+                }),
+                fetch('/predict_wildfire', {
+                    method: 'POST',
+                    body: formData
+                })
+            ])
+            .then(async ([deforestationRes, wildfireRes]) => {
+                if (!deforestationRes.ok) throw new Error('Deforestation analysis failed');
+                if (!wildfireRes.ok) throw new Error('Wildfire analysis failed');
+                
+                const deforestationData = await deforestationRes.json();
+                const wildfireData = await wildfireRes.json();
+                
+                // Display deforestation results
+                deforestationResult.textContent = `${deforestationData.result}`;
+                deforestationResult.className = `result ${deforestationData.result.includes('Detected') ? 'detected' : 'not-detected'}`;
+                deforestationConfidence.style.width = `${deforestationData.prediction * 100}%`;
+                
+                // Display wildfire results
+                wildfireResult.textContent = `${wildfireData.result}`;
+                wildfireResult.className = `result ${wildfireData.result.includes('Detected') ? 'fire-detected' : 'not-detected'}`;
+                wildfireConfidence.style.width = `${wildfireData.prediction * 100}%`;
+            })
+            .catch(error => {
+                deforestationResult.textContent = `Error: ${error.message}`;
+                deforestationResult.className = 'result detected';
+                wildfireResult.textContent = `Error: ${error.message}`;
+                wildfireResult.className = 'result fire-detected';
+                console.error('Analysis Error:', error);
+            })
+            .finally(() => {
+                analyzeBtn.disabled = false;
+                analysisLoading.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
